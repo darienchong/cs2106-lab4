@@ -32,7 +32,7 @@ void *mmf_map_file_by_fd(int fd, size_t sz) {
 	void *to_return = mmap(NULL, sz, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_SHARED, fd, 0);
 	
 	// If the file length is less than sz, we need to ftruncate it to extend it (pad it with zeroes)
-	// This ensures that we don't gegt a bus error when attempting to write beyond
+	// This ensures that we don't get a bus error when attempting to write beyond
 	// the current file size (if the file was newly created, that's 0).
 	ftruncate(fd, sz);
 	
