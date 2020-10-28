@@ -1,11 +1,12 @@
 /*************************************
 * Lab 4
-* Name:
-* Student No:
-* Lab Group:
+* Name: Darien Chong
+* Student No: A0168214H
+* Lab Group: 6
 *************************************/
 
 #include <stddef.h>
+#include <stdbool.h>
 
 /*
 You should modify these structs to suit your implementation,
@@ -18,8 +19,18 @@ structs to typedefs, as long as the functions satisfy the
 requirements in the lab document.  If you declare additional names (helper structs or helper functions), they should be prefixed with "shmheap_" to avoid potential name clashes.
 */
 
-typedef struct {} shmheap_memory_handle;
-typedef struct {} shmheap_object_handle;
+typedef struct {
+	const char *name; // The name of the shared heap.
+	int shm_fd; // The file descriptor of the shared heap.
+	void *mmap_ptr; // The pointer returned by mmap.
+	int shm_len; // The length of the heap.
+
+	int alloc_size; // The length of the allocation.
+} shmheap_memory_handle;
+
+typedef struct {
+	int offset; // Offset from base address
+} shmheap_object_handle;
 
 
 /*
