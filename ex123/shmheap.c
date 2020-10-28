@@ -23,6 +23,18 @@ int _shmheap_get_prot_permissions() {
 	return PROT_EXEC | PROT_READ | PROT_WRITE;
 }
 
+/**
+ * Rounds up the size to the nearest multiple of 8.
+ */
+int _shmheap_round_up(size_t sz) {
+	int i = sz / 8;
+	int floor_mult_of_8 = 8 * i;
+	if (sz == floor_mult_of_8) {
+		return floor_mult_of_8;
+	}
+	return floor_mult_of_8 + 8;
+}
+
 shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 	shmheap_memory_handle mem_handle;
 	
@@ -89,11 +101,11 @@ void shmheap_destroy(const char *name, shmheap_memory_handle mem) {
 }
 
 void *shmheap_underlying(shmheap_memory_handle mem) {
-    /* TODO */
+    return mem.mmap_ptr;
 }
 
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
-	mem.alloc_size = sz;
+	int round_sz = _shmheap_round_up(sz);
 	
     return mem.mmap_ptr;
 }
