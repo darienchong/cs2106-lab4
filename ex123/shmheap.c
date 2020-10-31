@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-bool is_debug = true;
+bool is_debug = false;
 
 int _shmheap_get_prot_permissions() {
 	return PROT_EXEC | PROT_READ | PROT_WRITE;
