@@ -402,13 +402,19 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
 }
 
 void shmheap_free(shmheap_memory_handle mem, void *ptr) {
+	// We require that alloc/free do not occur at the same time
+	// to prevent corruption when they act on the same piece of memory
+	// simultaeneously, for example if alloc thinks that a partially free'd
+	// piece of memory can be used and messes with it *while* it is being free'd.
+	// For laziness, however, I left the other semaphore in the bookkeeping 
+	// since it doesn't bring us over the limit anyway.
 	if (is_debug) {
-		printf("[shmheap_free(%d)]: Acquiring free_sem.\n", getpid());
+		printf("[shmheap_free(%d)]: Acquiring alloc_sem.\n", getpid());
 	}
-	_shmheap_acquire_free_mutex(mem);
+	_shmheap_acquire_alloc_mutex(mem);
 	if (is_debug) {
 		shmheap_node *debug_node_ref = (shmheap_node*) (ptr - sizeof(shmheap_node));
-		printf("[shmheap_free(%d)]: Acquired free_sem.\n", getpid());
+		printf("[shmheap_free(%d)]: Acquired alloc_sem.\n", getpid());
 		printf("[shmheap_free(%d)]: ptr offset from mmap_ptr = [%ld].\n", getpid(), _shmheap_ptr_subtraction(ptr, mem.mmap_ptr));
 		printf("[shmheap_free(%d)]: Freeing [%s|%ld] at offset [%ld].\n", 
 			getpid(), 
@@ -425,9 +431,9 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
     
     _shmheap_merge(mem);
     
-    _shmheap_release_free_mutex(mem);
+    _shmheap_release_alloc_mutex(mem);
     if (is_debug) {
-		printf("[shmheap_free(%d)]: Releasing free_sem.\n", getpid());
+		printf("[shmheap_free(%d)]: Releasing alloc_sem.\n", getpid());
 	}
     return;
 }
