@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-bool is_debug = false;
+bool is_debug = true;
 
 int _shmheap_get_prot_permissions() {
 	return PROT_EXEC | PROT_READ | PROT_WRITE;
@@ -100,9 +100,21 @@ bool _shmheap_merge_helper(shmheap_memory_handle mem, shmheap_node *head) {
 					next_ptr -> size,
 					_shmheap_get_curr_ptr_offset(mem, next_ptr)
 				);
+				printf("[_shmheap_merge_helper(%d)]: <SANITY CHECK> New partition should be of size [%ld].\n", 
+					getpid(),
+					(curr_ptr -> size) + sizeof(shmheap_node) + (next_ptr -> size)
+				);
 			}
 			curr_ptr -> size = (curr_ptr -> size) + sizeof(shmheap_node) + (next_ptr -> size);
 			
+			if (is_debug) {
+				printf("[_shmheap_merge_helper(%d)]: New partition = [%s|%ld] @ [%ld].\n",
+					getpid(),
+					curr_ptr -> is_filled ? "T" : "F",
+					curr_ptr -> size,
+					_shmheap_get_curr_ptr_offset(mem, curr_ptr)
+				);
+			}
 			return true;
 		}
 		
