@@ -331,9 +331,6 @@ void *shmheap_underlying(shmheap_memory_handle mem) {
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
 	size_t node_sz = sizeof(shmheap_node);
 	size_t rounded_sz = _shmheap_round_up(sz);
-	if (is_debug) {
-		printf("[shmheap_alloc(%d)]: sz = [%ld -(rounded)-> %ld].\n", getpid(), sz, rounded_sz);
-	}
 	
 	if (is_debug) {
 		printf("[shmheap_alloc(%d)]: Acquiring alloc_sem...\n", getpid());
@@ -341,6 +338,7 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
 	_shmheap_acquire_alloc_mutex(mem);
 	if (is_debug) {
 		printf("[shmheap_alloc(%d)]: Acquired alloc_sem.\n", getpid());
+		printf("[shmheap_alloc(%d)]: sz = [%ld -(rounded)-> %ld].\n", getpid(), sz, rounded_sz);
 	}
 	shmheap_node *curr_ptr = _shmheap_search_for_first_fit(mem, sz);
 	
@@ -412,7 +410,12 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
 		shmheap_node *debug_node_ref = (shmheap_node*) (ptr - sizeof(shmheap_node));
 		printf("[shmheap_free(%d)]: Acquired free_sem.\n", getpid());
 		printf("[shmheap_free(%d)]: ptr offset from mmap_ptr = [%ld].\n", getpid(), _shmheap_ptr_subtraction(ptr, mem.mmap_ptr));
-		printf("[shmheap_free(%d)]: Freeing [%s|%ld] at offset [%ld].\n", getpid(), debug_node_ref -> is_filled ? "T" : "F", debug_node_ref -> size, _shmheap_get_curr_ptr_offset(mem, debug_node_ref) + sizeof(shmheap_node));
+		printf("[shmheap_free(%d)]: Freeing [%s|%ld] at offset [%ld].\n", 
+			getpid(), 
+			debug_node_ref -> is_filled ? "T" : "F", 
+			debug_node_ref -> size, 
+			_shmheap_get_curr_ptr_offset(mem, debug_node_ref) + sizeof(shmheap_node)
+		);
 	}
 	
     // Just set `is_filled` to false and run merge
