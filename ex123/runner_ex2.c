@@ -105,7 +105,7 @@ static int child_proc(const bidir_pipe *bp, const char *mem_name, int child_idx)
                 assert(res == sizeof(first));
                 res = read(input_fd, &count, sizeof(count));
                 assert(res == sizeof(count));
-                size_t *data = (size_t*)shmheap_alloc(mem, sizeof(size_t) * count);
+                size_t *data = (size_t*)shmheap_alloc(mem, sizeof(size_t) * count);                
                 printf("#%d: Allocated at offset %zu:", child_idx, (char*)data - (char*)base);
                 for (size_t i=0; i!=count; ++i) {
                     data[i] = first++;

@@ -27,7 +27,7 @@ typedef struct {
 } shmheap_memory_handle;
 
 typedef struct {
-	int offset; // Offset from base address
+	size_t offset; // Offset from base address
 } shmheap_object_handle;
 
 typedef struct {
