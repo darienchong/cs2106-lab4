@@ -10,6 +10,7 @@
 #include "shmheap.h"
 
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,16 +26,28 @@ int _shmheap_get_prot_permissions() {
 	return PROT_EXEC | PROT_READ | PROT_WRITE;
 }
 
+size_t _shmheap_get_curr_ptr_offset(shmheap_memory_handle mem, shmheap_node *node_ptr) {
+	return (void*) node_ptr - mem.mmap_ptr;
+}
+
 /**
- * Returns a pointer to the next shmheap_node in the linked-list, scoped to the process memory.
- * Returns NULL if no next pointer exists.
+ * Returns the offset from this node pointer to the next node pointer.
+ * Should only be called if we are guaranteed of the next node pointer's existence.
  */
-void *_shmheap_get_next_ptr(shmheap_node *node_ptr) {
-	if (node_ptr -> offset_to_next == 0) {
-		return NULL;
-	}
-	
-	return node_ptr + (node_ptr -> offset_to_next);
+size_t _shmheap_get_next_ptr_offset(shmheap_node *node_ptr) {
+	return sizeof(shmheap_node) + (node_ptr -> size);
+}
+
+/** 
+ * Returns the next node pointer.
+ * Note that we have to cast the pointer to (void*) first, else it increments by sizeof(shmheap_node).
+ */
+shmheap_node *_shmheap_get_next_ptr(shmheap_node *node_ptr) {
+	return ((void*) node_ptr) + _shmheap_get_next_ptr_offset(node_ptr);
+}
+
+size_t _shmheap_get_heap_size(shmheap_memory_handle mem) {
+	return mem.shm_len - sizeof(shmheap_semaphores);
 }
 
 /**
@@ -42,33 +55,39 @@ void *_shmheap_get_next_ptr(shmheap_node *node_ptr) {
  * up to one merge.
  * Returns true if a merge was performed, false otherwise.
  */
-bool _shmheap_merge_helper(shmheap_node *head) {
+bool _shmheap_merge_helper(shmheap_memory_handle mem, shmheap_node *head) {
 	shmheap_node *curr_ptr = head;
-	shmheap_node *next_ptr = (shmheap_node*) _shmheap_get_next_ptr(head);
+	shmheap_node *next_ptr = _shmheap_get_next_ptr(curr_ptr);
+	size_t heap_size = _shmheap_get_heap_size(mem);
 	
-	while (next_ptr != NULL) {
+	// If the next pointer offset >= heap size, we know we've
+	// gone over the limit.
+	
+	while (_shmheap_get_curr_ptr_offset(mem, curr_ptr) + _shmheap_get_next_ptr_offset(curr_ptr) < heap_size) {
 		// Idea: 
 		// Check if this partition is empty.
 		// - If not empty, then move on.
 		// - If empty, check if the next partition is empty.
 		//   - If it is, we merge the two partitions (current + next)
-		//     - current.offset_to_next = current_offset_to_next + next.offset_to_next
-		//     - current.size = current.size + sizeof(shmheap_node) + next.size
 		
 		if (curr_ptr -> is_filled) {
 			curr_ptr = next_ptr;
-			next_ptr = (shmheap_node*) _shmheap_get_next_ptr(next_ptr);
-			
+			next_ptr = _shmheap_get_next_ptr(curr_ptr);
 			continue;
 		}
 		
 		if (!(next_ptr -> is_filled)) {
 			// Merge the two partitions
-			curr_ptr -> offset_to_next = (curr_ptr -> offset_to_next) + (next_ptr -> offset_to_next);
+			if (is_debug) {
+				printf("[_shmheap_merge_helper(%d)]: Merging two partitions, [%s|%ld] and [%s|%ld].\n", getpid(), curr_ptr->is_filled?"T":"F", curr_ptr->size, next_ptr->is_filled?"T":"F", next_ptr->size);
+			}
 			curr_ptr -> size = (curr_ptr -> size) + sizeof(shmheap_node) + (next_ptr -> size);
 			
 			return true;
 		}
+		
+		curr_ptr = next_ptr;
+		next_ptr = _shmheap_get_next_ptr(curr_ptr);
 	}
 	
 	return false;
@@ -79,31 +98,56 @@ bool _shmheap_merge_helper(shmheap_node *head) {
  * no more merges detected. This is a separate method
  * to avoid using recursion (to avoid stack overflow for large heaps).
  */ 
-void _shmheap_merge(shmheap_node *head) {
+void _shmheap_merge(shmheap_memory_handle mem) {
+	int merge_iterations = -1;
 	bool merge_detected = true;
+	shmheap_node *head = mem.mmap_ptr + sizeof(shmheap_semaphores);
 	
 	while (merge_detected) {
-		merge_detected = _shmheap_merge_helper(head);
+		merge_detected = _shmheap_merge_helper(mem, head);
+		merge_iterations++;
 	}
 	
+	if (is_debug) {
+		printf("[_shmheap_merge(%d)]: %d merges performed.\n", getpid(), merge_iterations);
+	}
 	return;
 }
 
 /**
  * Returns the first shmheap_node that is empty and has a size large enough
- * to hold an object of size_t size.
+ * to hold an object of size_t size and a bookkeeping section of size sizeof(shmheap_node).
  */
 shmheap_node *_shmheap_search_for_first_fit(shmheap_memory_handle mem, size_t size) {
+	if (is_debug) {
+		printf("[_shmheap_search_for_first_fit(%d)]: Looking for a partition big enough to hold [%zu].\n", getpid(), size + sizeof(shmheap_node));
+	}	
+	
 	shmheap_node *head_ptr = (shmheap_node*) (mem.mmap_ptr + sizeof(shmheap_semaphores));
 	shmheap_node *curr_ptr = head_ptr;
 	
-	while (curr_ptr != NULL) {
+	size_t heap_size = _shmheap_get_heap_size(mem);
+	size_t current_tally = 0;
+	
+	// We know when we've traversed the entire list
+	// by checking our current tally (every time we pass a node, we increment the tally by (partition size + node size))
+	// when this sum = heap size, we've reached the end of the list.
+	while (current_tally < heap_size) {
 		if (!(curr_ptr -> is_filled) 
-		&& (((curr_ptr -> size) >= (size + sizeof(shmheap_node))))) {
+		&& (curr_ptr -> size >= (size + sizeof(shmheap_node)))) {
+			
+			if (is_debug) {
+				printf("[_shmheap_search_for_first_fit(%d)]: Found a partition at offset [%ld] of size [%ld] >= [%ld].\n", getpid(), ((void*) curr_ptr - mem.mmap_ptr), curr_ptr -> size, size + sizeof(shmheap_node));
+			}
+
 			return curr_ptr;
 		}
 		
+		if (is_debug) {
+			printf("[_shmheap_search_for_first_fit(%d)]: Current partition at offset [%ld] = [%s | %ld].\n", getpid(), ((void*) curr_ptr - mem.mmap_ptr), (curr_ptr -> is_filled ? "T" : "F"), curr_ptr -> size);
+		}
 		curr_ptr = _shmheap_get_next_ptr(curr_ptr);
+		current_tally += (sizeof(shmheap_node) + curr_ptr -> size);
 	}
 	
 	// We shouldn't get here, but...
@@ -146,8 +190,10 @@ void _shmheap_release_free_mutex(shmheap_memory_handle mem) {
 
 shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 	if (is_debug) {
+		printf("[shmheap_create(%d)]: sizeof(size_t) = [%ld].\n", getpid(), sizeof(size_t));
 		printf("[shmheap_create(%d)]: shmheap_node size = [%ld].\n", getpid(), sizeof(shmheap_node));
 		printf("[shmheap_create(%d)]: shmheap_semaphores size = [%ld].\n", getpid(), sizeof(shmheap_semaphores));
+		printf("[shmheap_create(%d)]: len = [%ld].\n", getpid(), len);
 	}
 	
 	shmheap_memory_handle mem_handle;
@@ -166,8 +212,7 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 	
 	shmheap_node head;
 	head.is_filled = false;
-	head.offset_to_next = 0;
-	head.size = len - sizeof(shmheap_node);
+	head.size = len - (sizeof(shmheap_semaphores) + sizeof(shmheap_node));
 	
 	shmheap_semaphores semaphores;
 	sem_init(&(semaphores.alloc_sem), SHARED_BETWEEN_PROC, 1);
@@ -179,7 +224,7 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 	mem_handle.shm_fd = shm_fd;
 	mem_handle.mmap_ptr = mmap_ptr;
 	mem_handle.shm_len = len;
-	
+
 	return mem_handle;
 }
 
@@ -233,50 +278,68 @@ void *shmheap_underlying(shmheap_memory_handle mem) {
 }
 
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
-	_shmheap_acquire_alloc_mutex(mem);
-	
+	int node_sz = sizeof(shmheap_node);
 	int rounded_sz = _shmheap_round_up(sz);
-	
 	if (is_debug) {
+		printf("[shmheap_alloc(%d)]: sz = [%ld].\n", getpid(), sz);
 		printf("[shmheap_alloc(%d)]: rounded_sz = [%d].\n", getpid(), rounded_sz);
 	}
 	
-	int node_sz = sizeof(shmheap_node);
-	
+	if (is_debug) {
+		printf("[shmheap_alloc(%d)]: Acquiring alloc_sem...\n", getpid());
+	}
+	_shmheap_acquire_alloc_mutex(mem);
+	if (is_debug) {
+		printf("[shmheap_alloc(%d)]: Acquired alloc_sem.\n", getpid());
+	}
 	shmheap_node *curr_ptr = _shmheap_search_for_first_fit(mem, sz);
 	
-	// Modify the current node (reduce size, set appropriate offset_to_next, flip is_filled)
-	// Create a new node and copy it over to the appropriate spot.
+	// Create a new node
+	// - `is_filled` = false
+	// - size = current node size - (sz + sizeof(shmheap_node))
+	// Modify the current node
+	// - Reduce the size.
+	// - Set `is_filled` to false.
+	// Copy over the new node to the appropriate location	
 	shmheap_node new_tail;
 	new_tail.is_filled = false;
-	new_tail.offset_to_next = (curr_ptr -> offset_to_next) - (rounded_sz + node_sz);
-	if ((curr_ptr -> offset_to_next) == 0) {
-		new_tail.offset_to_next = 0;
-	}
-	new_tail.size = (curr_ptr -> size) - (rounded_sz + node_sz);
+	new_tail.size = (curr_ptr -> size) - (sz + sizeof(shmheap_node));
 	
 	curr_ptr -> is_filled = true;
-	curr_ptr -> offset_to_next = rounded_sz + node_sz;
-	curr_ptr -> size = rounded_sz;
+	curr_ptr -> size = sz;
 	
-	memcpy(curr_ptr + (curr_ptr -> offset_to_next), &new_tail, node_sz);
+	memcpy(_shmheap_get_next_ptr(curr_ptr), &new_tail, node_sz);
 	
 	_shmheap_release_alloc_mutex(mem);
+	
+	if (is_debug) {
+		printf("[shmheap_alloc(%d)]: Releasing alloc_sem.\n", getpid());
+	}
     return curr_ptr + node_sz;
 }
 
 void shmheap_free(shmheap_memory_handle mem, void *ptr) {
+	if (is_debug) {
+		printf("[shmheap_free(%d)]: Acquiring free_sem.\n", getpid());
+	}
 	_shmheap_acquire_free_mutex(mem);
+	if (is_debug) {
+		shmheap_node *debug_node_ref = (shmheap_node*) (ptr - sizeof(shmheap_node));
+		printf("[shmheap_free(%d)]: Acquired free_sem.\n", getpid());
+		printf("[shmheap_free(%d)]: Freeing [%s|%ld] at offset [%ld].\n", getpid(), debug_node_ref -> is_filled ? "T" : "F", debug_node_ref -> size, _shmheap_get_curr_ptr_offset(mem, (shmheap_node*) (ptr - sizeof(shmheap_node))));
+	}
 	
-    // Just set the bookkeeping node is_filled to false
-    // and run merge
+    // Just set `is_filled` to false and run merge
     
     shmheap_node *node_ptr = (ptr - sizeof(shmheap_node));
     node_ptr -> is_filled = false;
     
-    _shmheap_merge(mem.mmap_ptr);
+    _shmheap_merge(mem);
     
     _shmheap_release_free_mutex(mem);
+    if (is_debug) {
+		printf("[shmheap_free(%d)]: Releasing free_sem.\n", getpid());
+	}
     return;
 }
 

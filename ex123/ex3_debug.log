@@ -1,0 +1,149 @@
+#3: Connected
+#2: Connected
+#1: Connected
+#0: Connected
+#4: Connected
+#5: Connected
+[shmheap_alloc(3811)]: sz = [80].
+[shmheap_alloc(3811)]: rounded_sz = [80].
+[shmheap_alloc(3811)]: Acquiring alloc_sem...
+[shmheap_alloc(3811)]: Acquired alloc_sem.
+[_shmheap_search_for_first_fit(3811)]: Looking for a partition big enough to hold [96].
+[_shmheap_search_for_first_fit(3811)]: Found a partition at offset [64] of size [65456] >= [96].
+[shmheap_alloc(3811)]: Releasing alloc_sem.
+#5: Allocated at offset 320: 50 51 52 53 54 55 56 57 58 59
+[shmheap_alloc(3808)]: sz = [80].
+[shmheap_alloc(3808)]: rounded_sz = [80].
+[shmheap_alloc(3808)]: Acquiring alloc_sem...
+[shmheap_alloc(3808)]: Acquired alloc_sem.
+[_shmheap_search_for_first_fit(3808)]: Looking for a partition big enough to hold [96].
+[_shmheap_search_for_first_fit(3808)]: Current partition at offset [64] = [T | 80].
+[_shmheap_search_for_first_fit(3808)]: Found a partition at offset [160] of size [65360] >= [96].
+[shmheap_alloc(3808)]: Releasing alloc_sem.
+#2: Allocated at offset 416: 20 21 22 23 24 25 26 27 28 29
+[shmheap_alloc(3807)]: sz = [80].
+[shmheap_alloc(3807)]: rounded_sz = [80].
+[shmheap_alloc(3807)]: Acquiring alloc_sem...
+[shmheap_alloc(3807)]: Acquired alloc_sem.
+[_shmheap_search_for_first_fit(3807)]: Looking for a partition big enough to hold [96].
+[_shmheap_search_for_first_fit(3807)]: Current partition at offset [64] = [T | 80].
+[_shmheap_search_for_first_fit(3807)]: Current partition at offset [160] = [T | 80].
+[_shmheap_search_for_first_fit(3807)]: Found a partition at offset [256] of size [65264] >= [96].
+[shmheap_alloc(3807)]: Releasing alloc_sem.
+#1: Allocated at offset 512: 10 11 12 13 14 15 16 17 18 19
+[shmheap_alloc(3806)]: sz = [80].
+[shmheap_alloc(3806)]: rounded_sz = [80].
+[shmheap_alloc(3806)]: Acquiring alloc_sem...
+[shmheap_alloc(3806)]: Acquired alloc_sem.
+[_shmheap_search_for_first_fit(3806)]: Looking for a partition big enough to hold [96].
+[_shmheap_search_for_first_fit(3806)]: Current partition at offset [64] = [T | 80].
+[_shmheap_search_for_first_fit(3806)]: Current partition at offset [160] = [T | 80].
+[_shmheap_search_for_first_fit(3806)]: Current partition at offset [256] = [T | 80].
+[_shmheap_search_for_first_fit(3806)]: Found a partition at offset [352] of size [65168] >= [96].
+[shmheap_alloc(3806)]: Releasing alloc_sem.
+#0: Allocated at offset 608: 0 1 2 3 4 5 6 7 8 9
+[shmheap_alloc(3809)]: sz = [80].
+[shmheap_alloc(3809)]: rounded_sz = [80].
+[shmheap_alloc(3809)]: Acquiring alloc_sem...
+[shmheap_alloc(3809)]: Acquired alloc_sem.
+[_shmheap_search_for_first_fit(3809)]: Looking for a partition big enough to hold [96].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [64] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [160] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [256] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [352] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Found a partition at offset [448] of size [65072] >= [96].
+[shmheap_alloc(3809)]: Releasing alloc_sem.
+#3: Allocated at offset 704: 30 31 32 33 34 35 36 37 38 39
+[shmheap_alloc(3810)]: sz = [80].
+[shmheap_alloc(3810)]: rounded_sz = [80].
+[shmheap_alloc(3810)]: Acquiring alloc_sem...
+[shmheap_alloc(3810)]: Acquired alloc_sem.
+[_shmheap_search_for_first_fit(3810)]: Looking for a partition big enough to hold [96].
+[_shmheap_search_for_first_fit(3810)]: Current partition at offset [64] = [T | 80].
+[_shmheap_search_for_first_fit(3810)]: Current partition at offset [160] = [T | 80].
+[_shmheap_search_for_first_fit(3810)]: Current partition at offset [256] = [T | 80].
+[_shmheap_search_for_first_fit(3810)]: Current partition at offset [352] = [T | 80].
+[_shmheap_search_for_first_fit(3810)]: Current partition at offset [448] = [T | 80].
+[_shmheap_search_for_first_fit(3810)]: Found a partition at offset [544] of size [64976] >= [96].
+[shmheap_alloc(3810)]: Releasing alloc_sem.
+#4: Allocated at offset 800: 40 41 42 43 44 45 46 47 48 49
+#5: Read: 0 1 2 3 0 64880 6 7 8 9
+#1: Read: 20 21 22 23 1 80 26 27 28 29
+#0: Read: 10 11 12 13 1 80 16 17 18 19
+#2: Read: 30 31 32 33 34 35 36 37 38 39
+#3: Read: 40 41 42 43 44 45 46 47 48 49
+#4: Read: 50 51 52 53 1 80 56 57 58 59
+#0: Read: 30 31 32 33 34 35 36 37 38 39
+#2: Read: 50 51 52 53 1 80 56 57 58 59
+#1: Read: 40 41 42 43 44 45 46 47 48 49
+[shmheap_free(3807)]: Acquiring free_sem.
+[shmheap_free(3807)]: Acquired free_sem.
+[shmheap_free(3807)]: Freeing [F|0] at offset [688].
+[_shmheap_merge(3807)]: 0 merges performed.
+[shmheap_free(3807)]: Releasing free_sem.
+#1: Freed at offset: 704
+[shmheap_alloc(3809)]: sz = [16].
+[shmheap_alloc(3809)]: rounded_sz = [16].
+[shmheap_alloc(3809)]: Acquiring alloc_sem...
+[shmheap_alloc(3809)]: Acquired alloc_sem.
+[_shmheap_search_for_first_fit(3809)]: Looking for a partition big enough to hold [32].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [64] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [160] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [256] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [352] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [448] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Current partition at offset [544] = [T | 80].
+[_shmheap_search_for_first_fit(3809)]: Found a partition at offset [640] of size [64880] >= [32].
+[shmheap_alloc(3809)]: Releasing alloc_sem.
+#3: Allocated at offset 896: 60 61
+#0: Read: 20 21 22 23 1 80 26 27 28 29
+[shmheap_free(3808)]: Acquiring free_sem.
+[shmheap_free(3808)]: Acquired free_sem.
+[shmheap_free(3808)]: Freeing [F|0] at offset [496].
+[_shmheap_merge(3808)]: 0 merges performed.
+[shmheap_free(3808)]: Releasing free_sem.
+#2: Freed at offset: 512
+[shmheap_free(3807)]: Acquiring free_sem.
+[shmheap_free(3807)]: Acquired free_sem.
+[shmheap_free(3807)]: Freeing [F|0] at offset [400].
+[_shmheap_merge(3807)]: 0 merges performed.
+[shmheap_free(3807)]: Releasing free_sem.
+#1: Freed at offset: 416
+#0: Read: 40 41 42 43 44 45 46 47 48 49
+#1: Read: 60 61
+#0: Read: 50 51 52 53 1 80 56 57 58 59
+#0: Read: 0 1 2 3 1 16 6 7 0 64848
+[shmheap_free(3809)]: Acquiring free_sem.
+[shmheap_free(3809)]: Acquired free_sem.
+[shmheap_free(3809)]: Freeing [F|0] at offset [880].
+[_shmheap_merge(3809)]: 0 merges performed.
+[shmheap_free(3809)]: Releasing free_sem.
+#3: Freed at offset: 896
+[shmheap_free(3808)]: Acquiring free_sem.
+[shmheap_free(3808)]: Acquired free_sem.
+[shmheap_free(3808)]: Freeing [F|0] at offset [304].
+[_shmheap_merge(3808)]: 0 merges performed.
+[shmheap_free(3808)]: Releasing free_sem.
+#2: Freed at offset: 320
+[shmheap_free(3807)]: Acquiring free_sem.
+[shmheap_free(3807)]: Acquired free_sem.
+[shmheap_free(3807)]: Freeing [F|0] at offset [784].
+[_shmheap_merge(3807)]: 0 merges performed.
+[shmheap_free(3807)]: Releasing free_sem.
+#1: Freed at offset: 800
+[shmheap_free(3806)]: Acquiring free_sem.
+[shmheap_free(3806)]: Acquired free_sem.
+[shmheap_free(3806)]: Freeing [F|0] at offset [592].
+[_shmheap_merge(3806)]: 0 merges performed.
+[shmheap_free(3806)]: Releasing free_sem.
+#0: Freed at offset: 608
+#5: Disconnected
+#3: Disconnected
+#2: Disconnected
+#1: Disconnected
+#0: Disconnected
+#4: Disconnected
+[shmheap_create(3804)]: sizeof(size_t) = [8].
+[shmheap_create(3804)]: shmheap_node size = [16].
+[shmheap_create(3804)]: shmheap_semaphores size = [64].
+[shmheap_create(3804)]: len = [65536].

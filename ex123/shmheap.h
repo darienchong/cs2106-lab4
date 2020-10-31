@@ -21,12 +21,9 @@ requirements in the lab document.  If you declare additional names (helper struc
 */
 
 typedef struct {
-	// const char *name; // The name of the shared heap.
 	int shm_fd; // The file descriptor of the shared heap.
 	void *mmap_ptr; // The pointer returned by mmap.
-	int shm_len; // The length of the heap.
-
-	int alloc_size; // The length of the allocation.
+	size_t shm_len; // The length of the heap.
 } shmheap_memory_handle;
 
 typedef struct {
@@ -35,11 +32,11 @@ typedef struct {
 
 typedef struct {
 	bool is_filled; // Whether the current space is filled
-	int offset_to_next; // Offset to the next node
 	size_t size; // Size of partition
 	
-	// offset_to_next fulfills 
-	// ptr_to_next = &shmheap_node + offset_to_next
+	// Size fulfills
+	// &next = &curr + size
+	// except where the node is the last node in the list (no next node exists)
 } shmheap_node;
 
 typedef struct {
