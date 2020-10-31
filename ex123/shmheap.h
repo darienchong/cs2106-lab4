@@ -32,6 +32,15 @@ typedef struct {
 	int offset; // Offset from base address
 } shmheap_object_handle;
 
+typedef struct {
+	bool is_filled; // Whether the current space is filled
+	int offset_to_next; // Offset to the next node
+	int size; // Size of partition
+	
+	// offset_to_next fulfills 
+	// ptr_to_next = &shmheap_node + offset_to_next
+} shmheap_node;
+
 
 /*
 These functions form the public API of your shmheap library.
