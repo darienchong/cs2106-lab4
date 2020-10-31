@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <semaphore.h>
 
 /*
 You should modify these structs to suit your implementation,
@@ -20,7 +21,7 @@ requirements in the lab document.  If you declare additional names (helper struc
 */
 
 typedef struct {
-	const char *name; // The name of the shared heap.
+	// const char *name; // The name of the shared heap.
 	int shm_fd; // The file descriptor of the shared heap.
 	void *mmap_ptr; // The pointer returned by mmap.
 	int shm_len; // The length of the heap.
@@ -35,12 +36,16 @@ typedef struct {
 typedef struct {
 	bool is_filled; // Whether the current space is filled
 	int offset_to_next; // Offset to the next node
-	int size; // Size of partition
+	size_t size; // Size of partition
 	
 	// offset_to_next fulfills 
 	// ptr_to_next = &shmheap_node + offset_to_next
 } shmheap_node;
 
+typedef struct {
+	sem_t alloc_sem; // Controls access to alloc
+	sem_t free_sem; // Controls access to free
+} shmheap_semaphores;
 
 /*
 These functions form the public API of your shmheap library.
